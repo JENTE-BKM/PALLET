@@ -133,8 +133,7 @@ function sums(){
   document.getElementById('f').innerHTML='<td>합계</td>'+c.map(x=>'<td>'+x+'</td>').join('')+'<td>'+total(R)+'</td>';
   document.getElementById('sc').innerHTML=
     '<div><span>파렛트 합계 ('+R.rows.length+'개)</span><span>'+ps+'</span></div>'+
-    '<div><span>봉투 1zone</span><span>'+v(R.bag1)+'</span></div>'+
-    '<div><span>봉투 2zone</span><span>'+v(R.bag2)+'</span></div>'+
+    '<div><span>봉투 합계</span><span>'+(v(R.bag1)+v(R.bag2))+'</span></div>'+
     '<div class="g"><span>총합산</span><span>'+total(R)+'</span></div>'+
     '<div class="x"><span>마대자루 (합산 제외)</span><span>'+v(R.sack)+'</span></div>'+
     '<div class="x"><span>테이프 (합산 제외)</span><span>'+v(R.tape)+'</span></div>';
