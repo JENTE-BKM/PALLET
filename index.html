@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>파렛트 집계</title>
+<title>팔레트 집계</title>
 <style>
 :root{--bg:#f6f7f9;--card:#fff;--tx:#1b1f24;--mu:#6b7380;--ac:#1f6feb;--bd:#d9dde3;--sum:#e8f0fe;--rd:#d93025;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#14171b;--card:#1e2329;--tx:#eef1f4;--mu:#98a2b0;--ac:#5b9bff;--bd:#343b44;--sum:#22324d;--rd:#ff6b61}}
@@ -57,7 +57,7 @@ button.warn{background:var(--rd);color:#fff;border-color:var(--rd);font-weight:7
 </style>
 </head>
 <body>
-<h1>📦 파렛트 집계</h1>
+<h1>📦 팔레트 집계</h1>
 <div class="date">
 <button id="prev">‹</button>
 <div class="dtbox"><div id="dtl"></div><input type="date" id="dt"></div>
@@ -77,7 +77,7 @@ button.warn{background:var(--rd);color:#fff;border-color:var(--rd);font-weight:7
 </table></div>
 <div class="sumcard" id="sc"></div>
 <div class="bar">
-<button class="p" id="add">+ 파렛트 추가</button>
+<button class="p" id="add">+ 팔레트 추가</button>
 <button id="clr">초기화</button>
 </div>
 <div class="bar">
@@ -156,7 +156,7 @@ function sums(){
   const ps=palletSum(R);
   document.getElementById('f').innerHTML='<td>합계</td>'+c.map(x=>'<td>'+x+'</td>').join('')+'<td>'+total(R)+'</td>';
   document.getElementById('sc').innerHTML=
-    '<div><span>파렛트 합계 ('+R.rows.length+'개)</span><span>'+ps+'</span></div>'+
+    '<div><span>팔레트 합계 ('+R.rows.length+'개)</span><span>'+ps+'</span></div>'+
     '<div><span>봉투 합계</span><span>'+(v(R.bag1)+v(R.bag2))+'</span></div>'+
     '<div class="g"><span>총합산</span><span>'+total(R)+'</span></div>'+
     '<div class="x"><span>마대자루 (합산 제외)</span><span>'+v(R.sack)+'</span></div>'+
@@ -207,7 +207,7 @@ function showHist(){
     const items=op?ks.map(k=>{
       const p=k.split('-').map(Number);
       const lab=p[1]+'월 '+p[2]+'일 ('+WD[new Date(p[0],p[1]-1,p[2]).getDay()]+')';
-      return '<div class="it'+(k===date?' cur':'')+'" data-d="'+k+'"><span><i class="'+(isRed(k)?'red':'')+'">'+lab+'</i> · '+data[k].rows.length+'파렛트</span><b>'+total(data[k])+'개</b></div>';
+      return '<div class="it'+(k===date?' cur':'')+'" data-d="'+k+'"><span><i class="'+(isRed(k)?'red':'')+'">'+lab+'</i> · '+data[k].rows.length+'팔레트</span><b>'+total(data[k])+'개</b></div>';
     }).join(''):'';
     return '<div class="grp"><div class="gh" data-m="'+m+'"><span>'+(op?'📂':'📁')+' '+m.slice(0,4)+'년 '+Number(m.slice(5))+'월</span><span>'+ks.length+'일 · <b>'+sum+'개</b></span></div>'+items+'</div>';
   }).join('');
