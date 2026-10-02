@@ -32,6 +32,7 @@ tfoot td:first-child{font-size:12px}
 .sumcard{margin:8px 6px;background:var(--card);border:1px solid var(--bd);border-radius:10px;padding:10px 14px;font-size:14px;color:var(--mu)}
 .sumcard div{display:flex;justify-content:space-between;padding:3px 0}
 .sumcard .g{border-top:2px solid var(--ac);margin-top:6px;padding-top:8px;color:var(--tx);font-size:20px;font-weight:800}
+.sumcard .x{font-size:13px}
 .sumcard .g span:last-child{color:var(--ac)}
 .bar{display:flex;gap:8px;margin:12px 6px}
 button{flex:1;font-size:15px;padding:14px 6px;border-radius:10px;border:1px solid var(--bd);background:var(--card);color:var(--tx)}
@@ -56,6 +57,7 @@ button.warn{background:var(--rd);color:#fff;border-color:var(--rd);font-weight:7
 <label>봉투 1zone<input type="number" inputmode="numeric" min="0" id="bag1" placeholder="0"></label>
 <label>봉투 2zone<input type="number" inputmode="numeric" min="0" id="bag2" placeholder="0"></label>
 <label>마대자루<input type="number" inputmode="numeric" min="0" id="sack" placeholder="0"></label>
+<label>테이프<input type="number" inputmode="numeric" min="0" id="tape" placeholder="0"></label>
 </div>
 <div class="wrap"><table>
 <colgroup><col style="width:38px"><col><col><col><col><col><col style="width:24%"></colgroup>
@@ -73,12 +75,12 @@ button.warn{background:var(--rd);color:#fff;border-color:var(--rd);font-weight:7
 <script>
 const T=['극소','소','중','대','이형'];
 const N=T.length;
-const blank=()=>({rows:[Array(N).fill('')],bag1:'',bag2:'',sack:''});
+const blank=()=>({rows:[Array(N).fill('')],bag1:'',bag2:'',sack:'',tape:''});
 const v=x=>parseInt(x)||0;
 const pad=n=>String(n).padStart(2,'0');
 const fmt=d=>d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());
 const palletSum=r=>r.rows.reduce((a,row)=>a+row.reduce((s,x)=>s+v(x),0),0);
-const total=r=>palletSum(r)+v(r.bag1)+v(r.bag2)+v(r.sack);
+const total=r=>palletSum(r)+v(r.bag1)+v(r.bag2);
 
 let data={};
 try{data=JSON.parse(localStorage.getItem('pallet3')||'{}')||{}}catch(e){}
@@ -106,7 +108,8 @@ function render(){
   const R=rec();
   document.getElementById('bag1').value=R.bag1;
   document.getElementById('bag2').value=R.bag2;
-  document.getElementById('sack').value=R.sack;
+  document.getElementById('sack').value=R.sack||'';
+  document.getElementById('tape').value=R.tape||'';
   const b=document.getElementById('b');b.innerHTML='';
   R.rows.forEach((r,i)=>{
     const tr=document.createElement('tr');
@@ -120,13 +123,14 @@ function sums(){
   R.rows.forEach((r,i)=>{const e=document.getElementById('r'+i);if(e)e.textContent=r.reduce((a,x)=>a+v(x),0)});
   const c=T.map((_,j)=>R.rows.reduce((a,r)=>a+v(r[j]),0));
   const ps=palletSum(R);
-  document.getElementById('f').innerHTML='<td>합계</td>'+c.map(x=>'<td>'+x+'</td>').join('')+'<td>'+ps+'</td>';
+  document.getElementById('f').innerHTML='<td>합계</td>'+c.map(x=>'<td>'+x+'</td>').join('')+'<td>'+total(R)+'</td>';
   document.getElementById('sc').innerHTML=
     '<div><span>파렛트 합계 ('+R.rows.length+'개)</span><span>'+ps+'</span></div>'+
     '<div><span>봉투 1zone</span><span>'+v(R.bag1)+'</span></div>'+
     '<div><span>봉투 2zone</span><span>'+v(R.bag2)+'</span></div>'+
-    '<div><span>마대자루</span><span>'+v(R.sack)+'</span></div>'+
-    '<div class="g"><span>총합산</span><span>'+total(R)+'</span></div>';
+    '<div class="g"><span>총합산</span><span>'+total(R)+'</span></div>'+
+    '<div class="x"><span>마대자루 (합산 제외)</span><span>'+v(R.sack)+'</span></div>'+
+    '<div class="x"><span>테이프 (합산 제외)</span><span>'+v(R.tape)+'</span></div>';
   showHist();
 }
 function go(d){date=d;armed=false;resetBtn();render()}
@@ -141,6 +145,7 @@ document.getElementById('b').addEventListener('input',e=>{
 document.getElementById('bag1').addEventListener('input',e=>{rec().bag1=e.target.value;save();sums()});
 document.getElementById('bag2').addEventListener('input',e=>{rec().bag2=e.target.value;save();sums()});
 document.getElementById('sack').addEventListener('input',e=>{rec().sack=e.target.value;save();sums()});
+document.getElementById('tape').addEventListener('input',e=>{rec().tape=e.target.value;save();sums()});
 document.getElementById('add').onclick=()=>{rec().rows.push(Array(N).fill(''));save();render();window.scrollTo(0,document.body.scrollHeight)};
 document.getElementById('prev').onclick=()=>shift(-1);
 document.getElementById('next').onclick=()=>shift(1);
