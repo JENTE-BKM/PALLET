@@ -37,7 +37,8 @@ tfoot td:first-child{font-size:12px}
 button{flex:1;font-size:15px;padding:14px 6px;border-radius:10px;border:1px solid var(--bd);background:var(--card);color:var(--tx)}
 button.p{background:var(--ac);color:#fff;border-color:var(--ac);font-weight:700}
 button.warn{background:var(--rd);color:#fff;border-color:var(--rd);font-weight:700}
-#hist{margin:6px;display:none}
+#hist{margin:6px 6px 24px}
+.hh{font-size:16px;margin:18px 12px 6px}
 #hist .it{display:flex;justify-content:space-between;padding:14px;margin-bottom:6px;background:var(--card);border:1px solid var(--bd);border-radius:10px;font-size:16px}
 #hist .it b{color:var(--ac)}
 #hist .it.cur{border-color:var(--ac)}
@@ -65,9 +66,9 @@ button.warn{background:var(--rd);color:#fff;border-color:var(--rd);font-weight:7
 <div class="sumcard" id="sc"></div>
 <div class="bar">
 <button class="p" id="add">+ 파렛트 추가</button>
-<button id="his">📅 기록</button>
 <button id="clr">초기화</button>
 </div>
+<h2 class="hh">📅 기록</h2>
 <div id="hist"></div>
 <script>
 const T=['극소','소','중','대','이형'];
@@ -126,8 +127,9 @@ function sums(){
     '<div><span>봉투 2zone</span><span>'+v(R.bag2)+'</span></div>'+
     '<div><span>마대자루</span><span>'+v(R.sack)+'</span></div>'+
     '<div class="g"><span>총합산</span><span>'+total(R)+'</span></div>';
+  showHist();
 }
-function go(d){date=d;armed=false;resetBtn();render();if(hist.style.display==='block')showHist()}
+function go(d){date=d;armed=false;resetBtn();render()}
 function shift(n){
   const p=date.split('-').map(Number);
   go(fmt(new Date(p[0],p[1]-1,p[2]+n)));
@@ -149,20 +151,16 @@ const clr=document.getElementById('clr');
 function resetBtn(){clearTimeout(timer);clr.textContent='초기화';clr.className=''}
 clr.onclick=()=>{
   if(!armed){armed=true;clr.textContent='한 번 더 누르면 삭제';clr.className='warn';timer=setTimeout(()=>{armed=false;resetBtn()},3000);return}
-  armed=false;resetBtn();delete data[date];save();render();if(hist.style.display==='block')showHist();
+  armed=false;resetBtn();delete data[date];save();render();
 };
 
 function showHist(){
   const keys=Object.keys(data).filter(k=>total(data[k])>0).sort().reverse();
   hist.innerHTML=keys.length?keys.map(k=>'<div class="it'+(k===date?' cur':'')+'" data-d="'+k+'"><span>'+k+' · '+data[k].rows.length+'파렛트</span><b>'+total(data[k])+'개</b></div>').join(''):'<div class="empty">저장된 기록이 없어요</div>';
-  hist.style.display='block';
 }
-document.getElementById('his').onclick=()=>{
-  if(hist.style.display==='block'){hist.style.display='none'}else{showHist();hist.scrollIntoView({behavior:'smooth'})}
-};
 hist.onclick=e=>{
   const it=e.target.closest('.it');if(!it)return;
-  go(it.dataset.d);hist.style.display='none';window.scrollTo(0,0);
+  go(it.dataset.d);window.scrollTo({top:0,behavior:'smooth'});
 };
 render();
 </script>
