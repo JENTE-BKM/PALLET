@@ -13,8 +13,13 @@ html{scroll-padding-top:env(safe-area-inset-top,0px)}
 body{margin:0;background:var(--bg);color:var(--tx);font-family:-apple-system,"Noto Sans KR","Malgun Gothic",sans-serif}
 h1{font-size:18px;margin:12px 12px 6px}
 .date{display:flex;gap:6px;margin:6px;align-items:stretch}
-.date input{flex:1;min-width:0;font-size:18px;text-align:center;border:1px solid var(--bd);border-radius:10px;background:var(--card);color:var(--tx);padding:10px}
+.dtbox{flex:1;min-width:0;position:relative;border:1px solid var(--bd);border-radius:10px;background:var(--card)}
+.dtbox #dtl{display:block;text-align:center;font-size:18px;font-weight:600;padding:12px 6px;color:var(--tx);white-space:nowrap}
+.dtbox #dtl.red{color:var(--rd)}
+.dtbox input{position:absolute;inset:0;width:100%;height:100%;opacity:0;font-size:16px;border:0;padding:0;margin:0}
 .date button{flex:0 0 52px;padding:0;font-size:20px}
+.red{color:var(--rd)}
+#hist .it i{font-style:normal}
 .loose{display:flex;gap:6px;margin:6px}
 .loose label{flex:1;background:var(--card);border:1px solid var(--bd);border-radius:10px;padding:6px 10px;font-size:12px;color:var(--mu);min-width:0}
 .loose input{display:block;width:100%;border:0;background:transparent;color:var(--tx);font-size:19px;font-weight:700;padding:4px 0;min-width:0}
@@ -43,6 +48,10 @@ button.warn{background:var(--rd);color:#fff;border-color:var(--rd);font-weight:7
 #hist .it{display:flex;justify-content:space-between;padding:14px;margin-bottom:6px;background:var(--card);border:1px solid var(--bd);border-radius:10px;font-size:16px}
 #hist .it b{color:var(--ac)}
 #hist .it.cur{border-color:var(--ac)}
+#hist .grp{margin-bottom:10px}
+#hist .gh{display:flex;justify-content:space-between;align-items:center;padding:14px;margin-bottom:6px;background:var(--sum);border-radius:10px;font-size:16px;font-weight:700}
+#hist .gh b{color:var(--ac)}
+#hist .it{margin-left:12px}
 .msg{margin:0 12px;min-height:20px;font-size:14px;font-weight:600}
 .empty{color:var(--mu);text-align:center;padding:20px}
 </style>
@@ -51,7 +60,7 @@ button.warn{background:var(--rd);color:#fff;border-color:var(--rd);font-weight:7
 <h1>📦 파렛트 집계</h1>
 <div class="date">
 <button id="prev">‹</button>
-<input type="date" id="dt">
+<div class="dtbox"><div id="dtl"></div><input type="date" id="dt"></div>
 <button id="next">›</button>
 </div>
 <div class="loose">
@@ -85,6 +94,17 @@ const N=T.length;
 const blank=()=>({rows:[Array(N).fill('')],bag1:'',bag2:'',sack:'',tape:''});
 const v=x=>parseInt(x)||0;
 const pad=n=>String(n).padStart(2,'0');
+// 공휴일: 매년 같은 날짜 + 설날·추석·부처님오신날·선거일·대체공휴일(2026~2027)
+const FIXED=new Set(['01-01','03-01','05-05','06-06','08-15','10-03','10-09','12-25']);
+const HOL=new Set([
+ '2026-02-16','2026-02-17','2026-02-18','2026-03-02','2026-05-25','2026-06-03','2026-08-17','2026-09-24','2026-09-25','2026-09-26','2026-10-05',
+ '2027-02-05','2027-02-06','2027-02-07','2027-02-08','2027-05-13','2027-08-16','2027-09-14','2027-09-15','2027-09-16','2027-10-04','2027-10-11'
+]);
+function isRed(ds){
+  const p=ds.split('-').map(Number);
+  const w=new Date(p[0],p[1]-1,p[2]).getDay();
+  return w===0||w===6||FIXED.has(ds.slice(5))||HOL.has(ds);
+}
 const fmt=d=>d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());
 const palletSum=r=>r.rows.reduce((a,row)=>a+row.reduce((s,x)=>s+v(x),0),0);
 const total=r=>palletSum(r)+v(r.bag1)+v(r.bag2);
@@ -112,6 +132,10 @@ document.getElementById('h').innerHTML='<th>#</th>'+T.map(t=>'<th>'+t+'</th>').j
 
 function render(){
   dt.value=date;
+  const dp=date.split('-').map(Number);
+  const dl=document.getElementById('dtl');
+  dl.textContent=dp[0]+'년 '+dp[1]+'월 '+dp[2]+'일 ('+'일월화수목금토'[new Date(dp[0],dp[1]-1,dp[2]).getDay()]+')';
+  dl.classList.toggle('red',isRed(date));
   const R=rec();
   document.getElementById('bag1').value=R.bag1;
   document.getElementById('bag2').value=R.bag2;
@@ -156,6 +180,7 @@ document.getElementById('add').onclick=()=>{rec().rows.push(Array(N).fill(''));s
 document.getElementById('prev').onclick=()=>shift(-1);
 document.getElementById('next').onclick=()=>shift(1);
 dt.onchange=()=>{if(dt.value)go(dt.value)};
+dt.addEventListener('click',()=>{try{dt.showPicker()}catch(e){}});
 
 let armed=false,timer=null;
 const clr=document.getElementById('clr');
@@ -165,11 +190,31 @@ clr.onclick=()=>{
   armed=false;resetBtn();delete data[date];save();render();
 };
 
+const openM=new Set();
+let lastM=null;
+const WD='일월화수목금토';
 function showHist(){
   const keys=Object.keys(data).filter(k=>total(data[k])>0).sort().reverse();
-  hist.innerHTML=keys.length?keys.map(k=>'<div class="it'+(k===date?' cur':'')+'" data-d="'+k+'"><span>'+k+' · '+data[k].rows.length+'파렛트</span><b>'+total(data[k])+'개</b></div>').join(''):'<div class="empty">저장된 기록이 없어요</div>';
+  if(!keys.length){hist.innerHTML='<div class="empty">저장된 기록이 없어요</div>';return}
+  const groups={};
+  keys.forEach(k=>{const m=k.slice(0,7);(groups[m]=groups[m]||[]).push(k)});
+  const cur=date.slice(0,7);
+  if(cur!==lastM){openM.add(cur);lastM=cur}
+  hist.innerHTML=Object.keys(groups).sort().reverse().map(m=>{
+    const ks=groups[m];
+    const sum=ks.reduce((a,k)=>a+total(data[k]),0);
+    const op=openM.has(m);
+    const items=op?ks.map(k=>{
+      const p=k.split('-').map(Number);
+      const lab=p[1]+'월 '+p[2]+'일 ('+WD[new Date(p[0],p[1]-1,p[2]).getDay()]+')';
+      return '<div class="it'+(k===date?' cur':'')+'" data-d="'+k+'"><span><i class="'+(isRed(k)?'red':'')+'">'+lab+'</i> · '+data[k].rows.length+'파렛트</span><b>'+total(data[k])+'개</b></div>';
+    }).join(''):'';
+    return '<div class="grp"><div class="gh" data-m="'+m+'"><span>'+(op?'📂':'📁')+' '+m.slice(0,4)+'년 '+Number(m.slice(5))+'월</span><span>'+ks.length+'일 · <b>'+sum+'개</b></span></div>'+items+'</div>';
+  }).join('');
 }
 hist.onclick=e=>{
+  const gh=e.target.closest('.gh');
+  if(gh){const m=gh.dataset.m;if(openM.has(m))openM.delete(m);else openM.add(m);showHist();return}
   const it=e.target.closest('.it');if(!it)return;
   go(it.dataset.d);window.scrollTo({top:0,behavior:'smooth'});
 };
