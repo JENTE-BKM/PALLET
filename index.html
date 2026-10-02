@@ -34,6 +34,11 @@ td input:focus{outline:2px solid var(--ac);outline-offset:-2px}
 td.r{font-weight:800;font-size:18px;padding:10px 2px;background:var(--sum)}
 tfoot td{background:var(--sum);font-weight:800;font-size:15px;padding:12px 0;border-top:2px solid var(--ac);white-space:nowrap}
 tfoot td:first-child{font-size:12px}
+.addrow td{padding:0}
+.addrow button{display:block;width:100%;flex:none;padding:7px 0;font-size:22px;font-weight:700;line-height:1;border:0;border-radius:0;background:var(--card);color:var(--ac)}
+.addrow button#del{color:var(--rd);font-size:20px}
+.addrow button#del:disabled{opacity:.3}
+.addrow button#del.warn{background:var(--rd);color:#fff;font-size:13px;padding:10px 0}
 .sumcard{margin:8px 6px;background:var(--card);border:1px solid var(--bd);border-radius:10px;padding:10px 14px;font-size:14px;color:var(--mu)}
 .sumcard div{display:flex;justify-content:space-between;padding:3px 0}
 .sumcard .g{border-top:2px solid var(--ac);margin-top:6px;padding-top:8px;color:var(--tx);font-size:20px;font-weight:800}
@@ -77,12 +82,9 @@ button.warn{background:var(--rd);color:#fff;border-color:var(--rd);font-weight:7
 </table></div>
 <div class="sumcard" id="sc"></div>
 <div class="bar">
-<button class="p" id="add">+ 팔레트 추가</button>
-<button id="clr">초기화</button>
-</div>
-<div class="bar">
 <button id="bk">💾 백업 저장</button>
 <button id="im">📂 불러오기</button>
+<button id="clr">초기화</button>
 </div>
 <div id="msg" class="msg"></div>
 <input type="file" id="file" accept=".txt,.json,text/plain,application/json" style="display:none">
@@ -147,6 +149,11 @@ function render(){
     tr.innerHTML='<td class="n">'+(i+1)+'</td>'+r.map((x,j)=>'<td><input type="number" inputmode="numeric" min="0" data-i="'+i+'" data-j="'+j+'" value="'+x+'"></td>').join('')+'<td class="r" id="r'+i+'"></td>';
     b.appendChild(tr);
   });
+  const ar=document.createElement('tr');
+  ar.className='addrow';
+  delArmed=false;clearTimeout(delTimer);
+  ar.innerHTML='<td colspan="'+(N+1)+'"><button id="add" aria-label="팔레트 추가">＋</button></td><td><button id="del" aria-label="마지막 팔레트 삭제"'+(R.rows.length<=1?' disabled':'')+'>－</button></td>';
+  b.appendChild(ar);
   sums();
 }
 function sums(){
@@ -176,7 +183,26 @@ document.getElementById('bag1').addEventListener('input',e=>{rec().bag1=e.target
 document.getElementById('bag2').addEventListener('input',e=>{rec().bag2=e.target.value;save();sums()});
 document.getElementById('sack').addEventListener('input',e=>{rec().sack=e.target.value;save();sums()});
 document.getElementById('tape').addEventListener('input',e=>{rec().tape=e.target.value;save();sums()});
-document.getElementById('add').onclick=()=>{rec().rows.push(Array(N).fill(''));save();render();window.scrollTo(0,document.body.scrollHeight)};
+let delArmed=false,delTimer=null;
+document.getElementById('b').addEventListener('click',e=>{
+  const db=e.target.closest('#del');
+  if(db){
+    const R=rec();
+    if(R.rows.length<=1)return;
+    const filled=R.rows[R.rows.length-1].some(x=>x!=='');
+    if(filled&&!delArmed){
+      delArmed=true;db.textContent='한 번 더';db.classList.add('warn');
+      delTimer=setTimeout(()=>{delArmed=false;const b=document.getElementById('del');if(b){b.textContent='－';b.classList.remove('warn')}},3000);
+      return;
+    }
+    R.rows.pop();save();render();
+    return;
+  }
+  if(!e.target.closest('#add'))return;
+  const R=rec();R.rows.push(Array(N).fill(''));save();render();
+  const f=document.querySelector('#b input[data-i="'+(R.rows.length-1)+'"][data-j="0"]');
+  if(f)f.focus();
+});
 document.getElementById('prev').onclick=()=>shift(-1);
 document.getElementById('next').onclick=()=>shift(1);
 dt.onchange=()=>{if(dt.value)go(dt.value)};
@@ -186,7 +212,7 @@ let armed=false,timer=null;
 const clr=document.getElementById('clr');
 function resetBtn(){clearTimeout(timer);clr.textContent='초기화';clr.className=''}
 clr.onclick=()=>{
-  if(!armed){armed=true;clr.textContent='한 번 더 누르면 삭제';clr.className='warn';timer=setTimeout(()=>{armed=false;resetBtn()},3000);return}
+  if(!armed){armed=true;clr.textContent='한 번 더 눌러 삭제';clr.className='warn';timer=setTimeout(()=>{armed=false;resetBtn()},3000);return}
   armed=false;resetBtn();delete data[date];save();render();
 };
 
