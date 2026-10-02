@@ -43,6 +43,7 @@ button.warn{background:var(--rd);color:#fff;border-color:var(--rd);font-weight:7
 #hist .it{display:flex;justify-content:space-between;padding:14px;margin-bottom:6px;background:var(--card);border:1px solid var(--bd);border-radius:10px;font-size:16px}
 #hist .it b{color:var(--ac)}
 #hist .it.cur{border-color:var(--ac)}
+.msg{margin:0 12px;min-height:20px;font-size:14px;font-weight:600}
 .empty{color:var(--mu);text-align:center;padding:20px}
 </style>
 </head>
@@ -70,6 +71,12 @@ button.warn{background:var(--rd);color:#fff;border-color:var(--rd);font-weight:7
 <button class="p" id="add">+ 파렛트 추가</button>
 <button id="clr">초기화</button>
 </div>
+<div class="bar">
+<button id="bk">💾 백업 저장</button>
+<button id="im">📂 불러오기</button>
+</div>
+<div id="msg" class="msg"></div>
+<input type="file" id="file" accept=".txt,.json,text/plain,application/json" style="display:none">
 <h2 class="hh">📅 기록</h2>
 <div id="hist"></div>
 <script>
@@ -166,6 +173,42 @@ function showHist(){
 hist.onclick=e=>{
   const it=e.target.closest('.it');if(!it)return;
   go(it.dataset.d);window.scrollTo({top:0,behavior:'smooth'});
+};
+const msg=document.getElementById('msg');
+const say=(t,bad)=>{msg.textContent=t;msg.style.color=bad?'var(--rd)':'var(--ac)'};
+document.getElementById('bk').onclick=()=>{
+  const blob=new Blob([JSON.stringify({app:'pallet',v:3,saved:fmt(new Date()),data:data})],{type:'text/plain'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download='pallet-backup-'+fmt(new Date())+'.txt';
+  document.body.appendChild(a);a.click();a.remove();
+  setTimeout(()=>URL.revokeObjectURL(a.href),1000);
+  say('백업 파일을 저장했어요. 내 파일 > 다운로드 폴더를 확인하세요.');
+};
+const fileEl=document.getElementById('file');
+document.getElementById('im').onclick=()=>fileEl.click();
+fileEl.onchange=()=>{
+  const f=fileEl.files[0];if(!f)return;
+  const rd=new FileReader();
+  rd.onload=()=>{
+    try{
+      const o=JSON.parse(rd.result);
+      if(!o||o.app!=='pallet'||typeof o.data!=='object')throw 0;
+      let n=0;
+      Object.keys(o.data).forEach(k=>{
+        const r=o.data[k];
+        if(/^\d{4}-\d{2}-\d{2}$/.test(k)&&r&&Array.isArray(r.rows)){
+          let rows=r.rows.map(x=>Array.from({length:N},(_,j)=>x&&x[j]!=null?String(x[j]):''));
+          if(!rows.length)rows=[Array(N).fill('')];
+          data[k]={rows:rows,bag1:r.bag1||'',bag2:r.bag2||'',sack:r.sack||'',tape:r.tape||''};
+          n++;
+        }
+      });
+      save();render();say(n+'일치 기록을 불러왔어요. (같은 날짜는 파일 내용으로 바뀌었어요)');
+    }catch(e){say('불러올 수 없는 파일이에요.',true)}
+    fileEl.value='';
+  };
+  rd.readAsText(f);
 };
 render();
 </script>
